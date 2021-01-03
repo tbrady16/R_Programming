@@ -2,7 +2,9 @@
 title: "R_Programming_Markdown_Notes"
 author: "Travis Brady"
 date: "12/30/2020"
-output: html_document
+output:
+  html_document: default
+  pdf_document: default
 ---
 
 ```{r setup, include=FALSE}
@@ -11,11 +13,204 @@ knitr::opts_chunk$set(echo = TRUE)
 
 # Changing Directories
 
-getwd() will provide you with working directory. You can only read data that is currently in your working directory
-dir() lists all files in the current directory. read.csv("") can be used to import and read CSV files, given they are placed in the correct directory
+**getwd()** will provide you with working directory. You can only read data that is currently in your working directory
+dir() lists all files in the current directory. read.csv("") can be used to import and read CSV files, given they are placed in the correct directory.
 
-# R History
+# Console Input and Evaluation
 
-You can also embed plots, for example:
+**<-** is the assignment operator, it can be used anywhere. You can autoprint objects or explicitly print them with the print function. The brackets before the line of code in the result tells you which elements of the vector you are looking at. 
 
-Note that the `echo = FALSE` parameter was added to the code chunk to prevent printing of the R code that generated the plot.
+```{r}
+x <- 1 ## assign x the value of 1
+y <- 1:20 ## assign y the vector 1:20
+print(x) ## print x
+msg <- "hello" ##assign msg the string "hello"
+```
+
+# Objects and Attributes
+
+R has 5 basic (atomic) classes of objects:
+
+- character
+- numeric
+- integer
+- complex
+- logical/Boullion (True/False)
+
+Vectors are the most basic
+
+- all objets in a vector are of the same class
+- **lists are a key exception**; they contain different classes of objects
+- empty vectors can be created with the **vector()** function - first argument is the class, second argument is the length.
+
+## Numbers
+
+- numbers can be intergers or numeric objects: 1 is a numeric object, 1L gives the integer
+- **inf** is infinity
+- NaN (not a number) is for undefined values (0/0 for example)
+
+
+## Attributes
+
+- names and dimnames
+- dimensions
+- class
+- length
+- other user-defined attributes
+- attributes can be provided using **attributes()** function
+
+# Vectors, Lists and Matrices
+
+## Vectors
+
+The **c()** function creates vectors that are numeric, logical, characters, or integers. Combining different classes will not return an error, but R will "coerce" elements of the vector to have uniforminty. Preferentially made into characters or numerics.
+
+```{r}
+a <- c(0, 0.3, 1, 0.5)
+b <- c(TRUE, FALSE)
+c <- c(T,F)
+d <- c("a", "b", "c")
+e <- c(10:32)
+f <- c(1+0i, 3+4i)
+```
+
+Using the **as.** functions, you can force coercion. Non-sensical coercion causes NAs - letters cannot be made into numbers, or logicals
+
+```{r}
+class(a)
+a1 <- as.numeric(a) ## make all elements numbers (no change)
+a2 <- as.logical(a) ## make all elements logical (T/F)
+a3 <- as.character(a) ## make all elements characters
+```
+
+The **seq()** function allows you to vary the intervals in a vector, or specify a specific amount of of values between two numbers.
+
+```{r}
+b1 <- seq(from = 0, to = 10, by=0.5)
+b2 <- seq(0, 10 , 0.5) ## without specification, seq assumes from, to and by
+b3 <- seq(from = 3, to = 27, length.out = 9)
+b4 <- seq(3, 27, length.out = 9)
+```
+
+## Lists
+
+Lists can contain elements of different classes. Lists will have double brackets instead of single brackets when printed. Use **list()** to create.
+
+```{r}
+x <- list(1, "a", T, 1 + 4i)
+```
+
+## Matrices
+
+Matrices, **matrix()**, are vectors with a dimension attribute (which is itself a vector containing two quantities; the number of rows and the number of columns). **dim() and attributes()** provide the dimension attribute and all attributes, respectively. Note that matrices fill column-wise.
+
+```{r}
+m <- matrix(1:12, nrow = 3, ncol = 4) ## creates a matrix with 4 rows and 3 columns, using the numbers 1 through 12. matrix is empty unless values specified.
+dim(m) ## gives dimension attribute
+attributes(m) # provides the attributes
+print(m)
+```
+
+Alternatively, matrices can be made by applying specific dimensions to a given vector
+
+```{r}
+j <- 1:10 ## create a vector with integers 1 through 10
+dim(j) <- c(2,5) ## change number of dimensions to 2 (nrows=2, ncolumns=5)
+```
+
+Also, you can use column binding, **cbind()**, and row binding, **rbind()**, to build matrices from vectors with compatible lengths
+
+```{r}
+x1 <- 1:5
+x2 <- 121:125
+x3 <- cbind(x1, x2)
+x4 <- rbind(x1,x2)
+```
+
+# Data Types
+
+## Factors
+
+Factors are used to represent categorical data: either unordered (i.e. male or female) or ordered (ranked, like university positions). Essentially integer vectors where the vectors are linked to labels.These are treated differently by important modeling functions like **lm() and glm()**.
+
+```{r}
+f1 <- factor(c("yes", "no", "yes", "yes", "no", "yes", "yes", "maybe")) 
+levels(f1) = c("yes", "no", "maybe") ## this assigns levels (yes 1st, no 2nd, maybe 3rd)
+table(f1) ## gives frequency count each level in a factor
+unclass(f1) ## will provide the numerical quantities underlying the levels, as well as order them according to this underlying quantity (i.e. whatever is "2" is printed second, the default order is alphabetical for different factors).
+```
+
+## Missing Values
+
+NaN is given for improper/missing mathematical operations while NA is used for everything else. **is.na() and is.nan()** tests to see if objects are NA or NaN. NA values can have class (integer, character, etc.) while NaNs are numerical. NaN is a type of NA, NA is not a type of Nan.
+
+```{r}
+L <- c(1, 2, NA, 7, NaN, 10, 3)
+is.na(L)
+is.nan(L)
+```
+
+## Data Frame
+
+Data frames are used to store tabular data. **data.frame()** can be used to generate one. They are a list where every element of the list has to have the same length; each element is essentially a column, and the length of the elements is essentially the rows. Basically what a list is to a vector, a data frame is to a matrix.
+
+- these have special attributes **row.names** gives you the name of each row in a data set
+- the **read.table() or read.csv()** commands will create a data frame for you
+- can be converted to a matrix with **data.matric()**, this will coerce non-uniform elements. [**nrow(), ncol(), and dim() can provide dimensions**] 
+
+```{r}
+df1 <- data.frame(foo = 1:4, bar = c(T, T, F, T))
+df1
+```
+## Names Attribute
+
+R objects can be given names using **names()** function
+
+```{r}
+## 
+N <- 1:10 ## create a vector
+names(N)
+names(N) <- c("A", "B", "C", "D", "E", "F","G", "H", "I", "J") ## name each column of the vector
+N
+```
+
+```{r}
+lis <- list(a = 1, b = "add", c = T) ## you can directly name lists as you create them
+lis2 <- list(1, "add", T) ## or create the list first
+names(lis2) <- c("a", "b", "c") ## then add the names
+```
+
+Use **dimnames()** when giving matrices names
+
+```{r}
+NB <- matrix(1:8, nrow = 4, ncol = 2) ## a matrix, 1 to 8, 4 rows and 2 columns
+dimnames(NB) <- list(c("a", "b", "c", "d"), c("1", "2")) # first name the rows, a-d, then name the columns, 1 and 2.
+NB
+```
+
+# Reading Tabular Data
+
+**read.table and read.csv** will read text files that contain data stored in rows and columns, converting them to a data table. **readLines** reads lines of text files, converting text to character vector. **source** will read code into R, **dget** will read R code that has been dparsed into tex  **load and unserialize** functions are for reading binary objects into R.
+
+All these have analogous functions for writing data into files:
+
+- write.table
+- writeLines
+- dump
+- dput
+- save
+- serialize
+
+**read.table** has many arguments:
+- file, name of the file or connection
+- header, logical to indicate if file has header
+- sep, string indicating column separation
+- colClasses, character vector indicating class of each column
+- comment.char, character string indicating comment character
+- skip, the number of lins to skip at the beginning
+- stringsAsFactors, should character variables be coded as factors? logical, defaults true
+
+```{r}
+```
+
+**read.table** will skip lines that start with a #, figure out dimensions, figure out the type of variable in each column. **read.csv** is identical, but works on matrices separated by commas, not spaces.

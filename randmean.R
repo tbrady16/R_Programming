@@ -6,4 +6,3 @@ randmean <- function(x) {
 addnoise = function(x) {
   x + rnorm(length(x))
 }
-
