@@ -1,0 +1,20 @@
+---
+title: "Control Structures"
+author: "Travis Brady"
+date: "1/12/2021"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+# Control Structures
+
+- **if, else** tests a condition
+- **for** execute a loop a fixed number of times
+- **while** execute a loop while a condition is true
+-**repeat** execute infinite loop
+-**break** break loop execution
+-**next** skip iteration of a loop
+-**return** to exit a function

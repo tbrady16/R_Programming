@@ -213,4 +213,228 @@ All these have analogous functions for writing data into files:
 ```{r}
 ```
 
-**read.table** will skip lines that start with a #, figure out dimensions, figure out the type of variable in each column. **read.csv** is identical, but works on matrices separated by commas, not spaces.
+**read.table** will skip lines that start with a #, figure out dimensions, figure out the type of variable in each column. **read.csv** is identical, but works on matrices separated by commas, not spaces. 
+
+# Reading Large Datasets
+
+Quick tips:
+
+- read the help page for read.table
+- make a rough calculation of the memory (RAM) needed for your dataset
+- set comment.char = "" if there are no commented lines in your file
+- use the **colClasses** argument to let R know what type of data is in each column (logical, numeric, integer, complex, character, raw). if you give a single class, R assumes they are all of that classes.
+
+Below is a "quick and dirty" way to determine what types of data are in each column if you do not know/have too many columns. Note, **sapply()** can be used to apply a function over a list or vector. Note, if choosing a small subset of data to read, be sure it includes all possible types of data that column contains so R can do the appropriate coercion  - otherwise error ensues when column classes for the  whole data set are incorrectly labeled:
+
+```{r}
+initial <- read.table("AnonymousCovidData.csv", header = T, na.strings = c(""," ","NA"), sep =",", skip = 1, nrows = 1000, fill = T) ## import the table, specify there is a header, consider all empty cells or cells with " " to be NA, skip the first row, fill in empty cells and specify a small subset of 1000 rows to read through
+classes <- sapply(initial, class) ## apply the class function to each and every element (column) of the data table subset
+tabAll <- read.table("AnonymousCovidData.csv", header = T, na.strings = c(""," ","NA"), sep = ",", skip = 1, colClasses = classes, nrows = 4000, fill = T) # import table again, this time using all the data, and classify columns according to what R determined
+```
+
+# Textual Data Formats
+
+**dump** and **dput** are useful because they can contain metadata on the actual data set. Textual formats are also more easily read by version control software, and corruption is easier to root out. Unfortunately, this format is not space efficient.
+
+```{r}
+y <- data.frame(a = 1, b = "a")
+dput(y, file = "y.R")
+y2 <- dget("y.R")
+```
+
+the **dput** function takes R objects and restructures it. You can later use **dget** to reconstruct the object as it was in its original format.
+
+**dump** and **source** work similarly but can be applied to multiple R data structures simultaneously:
+
+```{r}
+t <- data.frame(time = seq(0, 20, by = 5), temp = c(12, 20, 27, 30, 25))
+u <- "We the People"
+v <- F
+dump(c("t", "u", "v"), file = "agg.R") ## create an R structure
+rm("t", "u", "v") ## use rm() function to remove created variables from environment
+source("agg.R") # use source to bring back the removed variables via the "agg.R" structure
+```
+
+# Interfaces with the Outside World
+
+Certain functions open up "connections" to the outside world. 
+
+- **file** opens a connection to a file
+- **gzfile** and **bzfile** open up connections to compressed files with gzip and bzip2, respectively
+- **url** opens up a webpage
+- **str** can be used to describe the arguments of a function: 
+
+File: Open argument inputs include **r** for read only, **w** for write (initalize new file) and **a** for appending. **rb, wb, ab** for reading, writing and appending in binary
+
+```{r}
+str(file) ## description argument is name of code, open argument has different codes
+```
+
+
+```{r}
+con <- file("Random_txt_file.txt", "r")
+data <- read.csv(con)
+close(con)
+```
+is the same as
+```{r}
+read.csv("Random_txt_file.txt")
+```
+
+Connections are more useful for reading parts of a file. Using **file**, or the appropriate derivative, you can open a file but use **readLines** to look at just part of it. A similar principle can be applied to web pages as well:
+
+```{r}
+con <- file("Random_txt_file.txt")
+s <- readLines(con, 4)
+```
+
+```{r}
+con <- url("https://www.jhsph.edu", "r")
+u <- readLines(con)
+head(u) ## returns first parts of a vector
+tail(u) ## returns last parts of a  vector
+close(con) ## remember to close connections when done
+```
+
+
+# Subsetting in R
+
+There are different ways to extract subsets:
+
+- **[** returns an object of the same class as the original, can be used to select more than one element (with one exception)
+- **[[** extracts elements of a list or data frame. It can only take one element and the class of the extracted list is not certain to be the same
+- **$** is to extract from a list or data frame by name
+
+```{r}
+d <- c("a","g", "b", "c", "z", "d", "e", "f")
+x <- list(1, "a", T, 1 + 4i)
+m <- matrix(1:12, nrow = 3, ncol = 4)
+
+d[6]
+d[3:7]
+d[d < "d"]
+u <- d < "e" ## logical vector that determines if each element is greater or less than a certain value
+u
+d[u] ## subset the full list with the logical vector to return only the desired values
+```
+
+Extracting a single element from a list:
+
+```{r}
+d <- c("a","g", "b", "c", "z", "d", "e", "f")
+x <- list(1, "a", T, 1 + 4i)
+m <- matrix(1:12, nrow = 3, ncol = 4)
+o <- list(letters = d, list = x, matrix = m)
+
+y1a <- o[3] ## returns data in same class as original. Meaning it extracts the matrix as the (only) item of a list, since o is a list
+y1b <- o[c(1,3)] ## to return multiple outputs, a single bracket operator must ne used, double brackets does not support multiple elements
+
+y2 <- o[[3]] ## returns data of any class so takes out matrix as a matrix
+
+y3a <- o$letters ## using the dollar sign, I asked for the list associated with letters
+name <- "letters"
+y3b <- o[["letters"]] ## does the same thing as o$letters
+y3c <- o["letters"] ## will give  a list with the first element being the vector I asked for
+y3d <- o[[name]]
+```
+
+Important to note, the **[[** operator can be used with computed indices, while the **$** operator needs literal names
+
+Subsetting a matrix brings up the exception to single bracket subsetting. Instead of a matrix with one value, it returns a vector of length one with that single value.
+
+```{r}
+d <- c("a","g", "b", "c", "z", "d", "e", "f")
+x <- list(1, "a", T, 1 + 4i)
+m <- matrix(1:12, nrow = 3, ncol = 4)
+o <- list(letters = d, list = x, matrix = m)
+
+z1a <- o[[c(2,3)]] ## double subset to extract specific item
+z1b <- o[[2]][[3]] ## another means of double subsetting
+
+z2a <- m[1,2] ## will give the first row second column of a matrix
+z2b <- m[1,]  ## will give the first row of the matrix
+z2c <- m[,2] ## will give the second column of a matrix
+z2d <- m[1,2, drop = F] ## causes the single bracket to keep (i.e. not drop) the second dimension of the matrix. Providing a 1x1 matrix with the value desired.
+z2e <- m[1, , drop =F] ## similarly, whole rows/columns can be retained as 1xn or nx1 matrices.
+```
+
+## Partial Matching
+
+Double bracket and dollar sign operator compatible. 
+
+```{r}
+d <- c("a","g", "b", "c", "z", "d", "e", "f")
+x <- list(1, "a", T, 1 + 4i)
+m <- matrix(1:12, nrow = 3, ncol = 4)
+o <- list(letters = d, list = x, matrix = m)
+
+o$le ## partial matching will "finish" the name for me, so assumes "le" is for "letters" since its the only match
+o[["le", exact = FALSE]] ## the same thing can be achieved with double brackets but you need to set exact = false.
+```
+
+## Removing NA values
+
+Exclamation piint, **!**, is bang operator, takes the opposite.
+
+```{r}
+k <- c(1, 2, NA, 4, NA, 5)
+j <- c("a", "b", NA, "d", NA, "f")
+bad <- is.na(k) ## create logical vector that confirms NA or not
+noNA <- k[!bad] ## the elements of k that do NOT have NA (F with logical vector)
+theNA <- k[bad] ## the elements of k that DO have NA (T with logical vector)
+good <- complete.cases(k, j)
+k[good]
+j[good]
+```
+
+```{r}
+initial <- read.table("AnonymousCovidData.csv", header = T, na.strings = c(""," ","NA"), sep =",", skip = 1, nrows = 1000, fill = T) ## import the table, specify there is a header, consider all empty cells or cells with " " to be NA, skip the first row, fill in empty cells and specify a small subset of 1000 rows to read through
+classes <- sapply(initial, class) ## apply the class function to each and every element (column) of the data table subset
+tabAll <- read.table("AnonymousCovidData.csv", header = T, na.strings = c(""," ","NA"), sep = ",", skip = 1, colClasses = classes, nrows = 4000, fill = T) # import table again, this time using all the data, and classify columns according to what R determined
+
+tabAll[1:6, 1:5] ## import the first 6 rows and first five columns of this data set
+good <- complete.cases(tabAll)
+tabAll[good][1:6,1:5] ## wont work for me because absolutely none of rows are completely filled in
+```
+
+# Vectorized Operations
+
+Some processes are done in parallel (applied across all elements of a vector):
+
+```{r}
+j <- 1:10
+k <- 11:20
+j + k ## element-wise sum of vectors
+j <= 6 ## logical vector denoting which elements satisfy condition
+j * k ## element wise product of vectors
+```
+
+
+```{r}
+m1 <- matrix(1:4, 2, 2); m2 <- matrix(rep(10,4), 2, 2)
+m1 * m2 ## this performs the dot product (element-wise) product of the matrices
+m2 / m1
+m1 %*% m2 ## surround in percentage signs to ensure matrix multiplication
+```
+
+
+```{r}
+HW1 <- read.csv("hw1_data.csv")
+HW1[1:2,] ## print first two columns
+nrow(HW1) ## calculate the number of rows
+tail(HW1, n = 2L) ## print the last two rows of the data sheet
+HW1[47, 1]
+Oz <- HW1[,1] ## create a vector containing all the data from the ozone column
+is.na(Oz) ## create a logical vector denoting which cells have NA
+length(Oz[is.na(Oz)]) ## apply the logical vector to the whole column, returning only the columns with values, then calculate the length of that vector
+mean(Oz[!is.na(Oz)]) ## average the the non-NA values of the vector using bang operator and mean function
+trunc <- HW1[HW1$Ozone > 31 & HW1$Temp >90,] ## create a truncated table that removes columns that have ozone values above 31 and temp values above 90
+## sol1 <- is.na(trunc$Solar.R)
+sol <- trunc$Solar.R[!is.na(trunc$Solar.R)] ## create a vector with the values from the truncated solar.R column that excludes NA
+mean(sol) ## mean of values in this range
+M6 <- HW1[HW1$Month == 6,] ## retain only values for month 6
+mean(M6$Temp)
+M5 <- HW1[HW1$Month == 5,]  ## retain only values for month 5 in table
+M5b <- M5$Ozone[!is.na(M5$Ozone)] ## create a vector of the non-NA values of the ozone column in the month 5 subset
+max(M5b)
+```

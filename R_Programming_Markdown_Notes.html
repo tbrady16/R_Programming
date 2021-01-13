@@ -585,6 +585,80 @@ NB</code></pre>
 ## d 4 8</code></pre>
 </div>
 </div>
+<div id="reading-tabular-data" class="section level1">
+<h1>Reading Tabular Data</h1>
+<p><strong>read.table and read.csv</strong> will read text files that contain data stored in rows and columns, converting them to a data table. <strong>readLines</strong> reads lines of text files, converting text to character vector. <strong>source</strong> will read code into R, <strong>dget</strong> will read R code that has been dparsed into tex <strong>load and unserialize</strong> functions are for reading binary objects into R.</p>
+<p>All these have analogous functions for writing data into files:</p>
+<ul>
+<li>write.table</li>
+<li>writeLines</li>
+<li>dump</li>
+<li>dput</li>
+<li>save</li>
+<li>serialize</li>
+</ul>
+<p><strong>read.table</strong> has many arguments: - file, name of the file or connection - header, logical to indicate if file has header - sep, string indicating column separation - colClasses, character vector indicating class of each column - comment.char, character string indicating comment character - skip, the number of lins to skip at the beginning - stringsAsFactors, should character variables be coded as factors? logical, defaults true</p>
+<p><strong>read.table</strong> will skip lines that start with a #, figure out dimensions, figure out the type of variable in each column. <strong>read.csv</strong> is identical, but works on matrices separated by commas, not spaces.</p>
+</div>
+<div id="reading-large-datasets" class="section level1">
+<h1>Reading Large Datasets</h1>
+<p>Quick tips:</p>
+<ul>
+<li>read the help page for read.table</li>
+<li>make a rough calculation of the memory (RAM) needed for your dataset</li>
+<li>set comment.char = &quot;&quot; if there are no commented lines in your file</li>
+<li>use the <strong>colClasses</strong> argument to let R know what type of data is in each column (logical, numeric, integer, complex, character, raw). if you give a single class, R assumes they are all of that classes.</li>
+</ul>
+<p>Below is a “quick and dirty” way to determine what types of data are in each column if you do not know/have too many columns. Note, <strong>sapply()</strong> can be used to apply a function over a list or vector. Note, if choosing a small subset of data to read, be sure it includes all possible types of data that column contains so R can do the appropriate coercion - otherwise error ensues when column classes for the whole data set are incorrectly labeled:</p>
+<pre class="r"><code>initial &lt;- read.table(&quot;AnonymousCovidData.csv&quot;, header = T, na.strings = c(&quot;&quot;,&quot; &quot;,&quot;NA&quot;), sep =&quot;,&quot;, skip = 1, nrows = 1000, fill = T) ## import the table, specify there is a header, consider all empty cells or cells with &quot; &quot; to be NA, skip the first row, fill in empty cells and specify a small subset of 1000 rows to read through
+classes &lt;- sapply(initial, class) ## apply the class function to each and every element (column) of the data table subset
+tabAll &lt;- read.table(&quot;AnonymousCovidData.csv&quot;, header = T, na.strings = c(&quot;&quot;,&quot; &quot;,&quot;NA&quot;), sep = &quot;,&quot;, skip = 1, colClasses = classes, nrows = 4000, fill = T) # import table again, this time using all the data, and classify columns according to what R determined</code></pre>
+</div>
+<div id="textual-data-formats" class="section level1">
+<h1>Textual Data Formats</h1>
+<p><strong>dump</strong> and <strong>dput</strong> are useful because they can contain metadata on the actual data set. Textual formats are also more easily read by version control software, and corruption is easier to root out. Unfortunately, this format is not space efficient.</p>
+<pre class="r"><code>y &lt;- data.frame(a = 1, b = &quot;a&quot;)
+dput(y, file = &quot;y.R&quot;)
+y2 &lt;- dget(&quot;y.R&quot;)</code></pre>
+<p>the <strong>dput</strong> function takes R objects and restructures it. You can later use <strong>dget</strong> to reconstruct the object as it was in its original format.</p>
+<p><strong>dump</strong> and <strong>source</strong> work similarly but can be applied to multiple R data structures simultaneously:</p>
+<pre class="r"><code>t &lt;- data.frame(time = seq(0, 20, by = 5), temp = c(12, 20, 27, 30, 25))
+u &lt;- &quot;We the People&quot;
+v &lt;- F
+dump(c(&quot;t&quot;, &quot;u&quot;, &quot;v&quot;), file = &quot;agg.R&quot;) ## create an R structure
+rm(&quot;t&quot;, &quot;u&quot;, &quot;v&quot;) ## use rm() function to remove created variables from environment
+source(&quot;agg.R&quot;) # use source to bring back the removed variables via the &quot;agg.R&quot; structure</code></pre>
+</div>
+<div id="interfaces-with-the-outside-world" class="section level1">
+<h1>Interfaces with the Outside World</h1>
+<p>Certain functions open up “connections” to the outside world.</p>
+<ul>
+<li><strong>file</strong> opens a connection to a file</li>
+<li><strong>gzfile</strong> and <strong>bzfile</strong> open up connections to compressed files with gzip and bzip2, respectively</li>
+<li><strong>url</strong> opens up a webpage</li>
+<li><strong>str</strong> can be used to describe the arguments of a function:</li>
+</ul>
+<p>File: Open argument inputs include <strong>r</strong> for read only, <strong>w</strong> for write (initalize new file) and <strong>a</strong> for appending. <strong>rb, wb, ab</strong> for reading, writing and appending in binary</p>
+<pre class="r"><code>str(file) ## description argument is name of code, open argument has different codes</code></pre>
+<pre><code>## function (description = &quot;&quot;, open = &quot;&quot;, blocking = TRUE, encoding = getOption(&quot;encoding&quot;), 
+##     raw = FALSE, method = getOption(&quot;url.method&quot;, &quot;default&quot;))</code></pre>
+<pre class="r"><code>con &lt;- file(&quot;Random_txt_file.txt&quot;, &quot;r&quot;)
+data &lt;- read.csv(con)</code></pre>
+<pre><code>## Warning in read.table(file = file, header = header, sep = sep, quote = quote, :
+## incomplete final line found by readTableHeader on &#39;Random_txt_file.txt&#39;</code></pre>
+<pre class="r"><code>close(con)</code></pre>
+<p>is the same as</p>
+<pre class="r"><code>read.csv(&quot;Random_txt_file.txt&quot;)</code></pre>
+<pre><code>## Warning in read.table(file = file, header = header, sep = sep, quote = quote, :
+## incomplete final line found by readTableHeader on &#39;Random_txt_file.txt&#39;</code></pre>
+<pre><code>##                No.header
+## 1        Random txt file
+## 2       Adding new Data.
+## 3 Maybe make it Tabular.</code></pre>
+<p>Connections are more useful for reading parts of a file. Using <strong>file</strong>, or the appropriate derivative, you can open a file but use <strong>readLines</strong> to look at just part of it:</p>
+<pre class="r"><code>con &lt;- file(&quot;Random_txt_file.txt&quot;)
+s &lt;- readLines(con, 4)</code></pre>
+</div>
 
 
 
