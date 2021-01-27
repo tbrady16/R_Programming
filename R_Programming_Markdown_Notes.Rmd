@@ -3,8 +3,8 @@ title: "R_Programming_Markdown_Notes"
 author: "Travis Brady"
 date: "12/30/2020"
 output:
-  html_document: default
   pdf_document: default
+  html_document: default
 ---
 
 ```{r setup, include=FALSE}
@@ -39,7 +39,7 @@ R has 5 basic (atomic) classes of objects:
 
 Vectors are the most basic
 
-- all objets in a vector are of the same class
+- all objects in a vector are of the same class
 - **lists are a key exception**; they contain different classes of objects
 - empty vectors can be created with the **vector()** function - first argument is the class, second argument is the length.
 
@@ -394,7 +394,7 @@ tabAll <- read.table("AnonymousCovidData.csv", header = T, na.strings = c(""," "
 
 tabAll[1:6, 1:5] ## import the first 6 rows and first five columns of this data set
 good <- complete.cases(tabAll)
-tabAll[good][1:6,1:5] ## wont work for me because absolutely none of rows are completely filled in
+## tabAll[good][1:6,1:5] ## wont work for me because absolutely none of rows are completely filled in
 ```
 
 # Vectorized Operations
@@ -417,10 +417,11 @@ m2 / m1
 m1 %*% m2 ## surround in percentage signs to ensure matrix multiplication
 ```
 
+# HW1
 
 ```{r}
 HW1 <- read.csv("hw1_data.csv")
-HW1[1:2,] ## print first two columns
+HW1[1:2,] ## print first two rows
 nrow(HW1) ## calculate the number of rows
 tail(HW1, n = 2L) ## print the last two rows of the data sheet
 HW1[47, 1]
