@@ -327,7 +327,7 @@ m <- matrix(1:12, nrow = 3, ncol = 4)
 o <- list(letters = d, list = x, matrix = m)
 
 y1a <- o[3] ## returns data in same class as original. Meaning it extracts the matrix as the (only) item of a list, since o is a list
-y1b <- o[c(1,3)] ## to return multiple outputs, a single bracket operator must ne used, double brackets does not support multiple elements
+y1b <- o[c(1,3)] ## to return multiple outputs, a single bracket operator must be used, double brackets does not support multiple elements
 
 y2 <- o[[3]] ## returns data of any class so takes out matrix as a matrix
 
